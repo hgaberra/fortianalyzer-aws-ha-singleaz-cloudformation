@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v7.0) AWS CFT to deploy a FortiAnalyzer A-P single AZ HA cluster into an existing VPC",
+	"Description": "(v7.4) AWS CFT to deploy a FortiAnalyzer A-P single AZ HA cluster into an existing VPC",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [
@@ -199,11 +199,11 @@
 			},
 			"7.0.x": {
 				"BYOL": "FortiAnalyzer VM64-AWS *(7.0.*)*|os40mk0fw6472m8ak2lnzp4s",
-				"PAYG2Devices": "FortiAnalyzer VM64-AWS *(7.0.*)*|9ipdy7tpkp24kmfsjgfuymny1",
-				"PAYG10Devices": "FortiAnalyzer VM64-AWS *(7.0.*)*|9ipdy7tpkp24kmfsjgfuymny1",
-				"PAYG30Devices": "FortiAnalyzer VM64-AWS *(7.0.*)*|9ipdy7tpkp24kmfsjgfuymny1",
-				"PAYG100Devices": "FortiAnalyzer VM64-AWS *(7.0.*)*|9ipdy7tpkp24kmfsjgfuymny1",
-				"PAYG500Devices": "FortiAnalyzer VM64-AWS *(7.0.*)*|9ipdy7tpkp24kmfsjgfuymny1"
+				"PAYG2Devices": "FortiAnalyzer VM64-AWSOnDemand *(7.0.*)*|9dtuu71e8jl604ce11efi1mzo",
+				"PAYG10Devices": "FortiAnalyzer VM64-AWSOnDemand *(7.0.*)*|5fjrlla50pzzq1c8064gnm11n",
+				"PAYG30Devices": "FortiAnalyzer VM64-AWSOnDemand *(7.0.*)*|f260v7j9fwdvlcsbnpsjpaozc",
+				"PAYG100Devices": "FortiAnalyzer VM64-AWSOnDemand *(7.0.*)*|3nlrca0hphlsq7bl6v99smx10",
+				"PAYG500Devices": "FortiAnalyzer VM64-AWSOnDemand *(7.0.*)*|dlwisgg79vzzo3zeommthp0zv"
 			}
 		}
 	},
@@ -319,12 +319,23 @@
 							"Version": "2012-10-17",
 							"Statement": [
 								{
+									"Sid": "BootStrapFromS3",
 									"Effect": "Allow",
 									"Action": [
-										"ec2:AssignPrivateIpAddresses",
-										"ec2:DescribeNetworkInterfaces",
-										"ec2:DescribeSubnets",
 										"s3:GetObject"
+									],
+									"Resource": "*"
+								},
+								{
+									"Sid": "SDNConnectorFortiView",
+									"Effect": "Allow",
+									"Action": [
+										"ec2:DescribeInstances",
+										"ec2:DescribeRegions",
+										"eks:DescribeCluster",
+										"eks:ListClusters",
+										"inspector:DescribeFindings",
+										"inspector:ListFindings"
 									],
 									"Resource": "*"
 								}
@@ -958,7 +969,7 @@
 								"        )",
 								"    except Exception as error:",
 								"        logger.error('<--!! Exception: {}'.format(error))",
-								"        responseData = {'msg':'error'}",
+								"        responseData = {'msg':'Exception: {}'.format(error)}",
 								"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
 								"",
 								"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200 and resp['Images'] != []:",
@@ -972,8 +983,8 @@
 								"        responseData = {'ami': ami_dict[ami_list[0]]}",
 								"        cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)",
 								"    else:",
-								"        logger.error('!!--> Unable to find AMI in response! {}'.format(resp))",
-								"        responseData = {'msg':'error'}",
+								"        logger.error('!!--> Unable to find AMI {} in describe_images response! {}'.format(event['ResourceProperties']['LicenseType'],resp))",
+								"        responseData = {'msg':'Unable to find AMI {} in describe_images response! {}'.format(event['ResourceProperties']['LicenseType'],resp)}",
 								"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
 								""
 							]
@@ -988,7 +999,7 @@
 				},
 				"Timeout": 120,
 				"Handler": "index.handler",
-				"Runtime": "python3.8",
+				"Runtime": "python3.9",
 				"MemorySize": 128
 			}
 		},
@@ -1245,8 +1256,9 @@
 								"        resp = s3.put_object(Body=faz1_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='faz1.txt')",
 								"    except Exception as error:",
 								"        logger.error('<--!! Exception: {}'.format(error))",
-								"        responseData = {'msg':'error'}",
+								"        responseData = {'msg':'Exception: {}'.format(error)}",
 								"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+								"        return None",
 								"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
 								"        faz1_result = True",
 								"        logger.info('<-- s3 put_object faz1.txt successful')",
@@ -1256,8 +1268,9 @@
 								"        resp = s3.put_object(Body=faz2_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='faz2.txt')",
 								"    except Exception as error:",
 								"        logger.error('<--!! Exception: {}'.format(error))",
-								"        responseData = {'msg':'error'}",
+								"        responseData = {'msg':'Exception: {}'.format(error)}",
 								"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+								"        return None",
 								"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
 								"        faz2_result = True",
 								"        logger.info('<-- s3 put_object faz2.txt successful')",
@@ -1281,7 +1294,7 @@
 				},
 				"Timeout": 120,
 				"Handler": "index.handler",
-				"Runtime": "python3.8",
+				"Runtime": "python3.9",
 				"MemorySize": 128
 			}
 		},
