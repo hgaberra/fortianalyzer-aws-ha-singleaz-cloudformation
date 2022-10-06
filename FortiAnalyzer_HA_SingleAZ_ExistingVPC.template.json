@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v7.4) AWS CFT to deploy a FortiAnalyzer A-P single AZ HA cluster into an existing VPC",
+	"Description": "(v7.5) AWS CFT to deploy a FortiAnalyzer A-P single AZ HA cluster into an existing VPC",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [
@@ -327,15 +327,15 @@
 									"Resource": "*"
 								},
 								{
-									"Sid": "SDNConnectorFortiView",
+									"Sid": "SDNFailover",
 									"Effect": "Allow",
 									"Action": [
-										"ec2:DescribeInstances",
-										"ec2:DescribeRegions",
-										"eks:DescribeCluster",
-										"eks:ListClusters",
-										"inspector:DescribeFindings",
-										"inspector:ListFindings"
+										"ec2:AssignPrivateIpAddresses",
+										"ec2:DescribeSubnets",
+										"ec2:DescribeNetworkInterfaces",
+										"ec2:DescribeAddresses",
+										"ec2:AssociateAddress",
+										"ec2:CreateTags"
 									],
 									"Resource": "*"
 								}
